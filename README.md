@@ -18,3 +18,4 @@ uvicorn backend.main:app --reload
 ```
 
 ブラウザで `frontend/index.html` を開くとデモ UI を利用できます。
+求人データと求職者データは txt/csv/Excel ファイルをアップロードして入力します。

@@ -7,6 +7,7 @@
 .tab { display:none; }
 .active { display:block; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <button onclick="showTab('jobs')">求人データ</button>
@@ -15,14 +16,14 @@
 
 <div id="jobs" class="tab">
   <h3>求人データ入力</h3>
-  <textarea id="jobsInput" rows="10" cols="60"></textarea><br>
+  <input type="file" id="jobsFile" accept=".txt,.csv,.xlsx,.xls"><br>
   <button onclick="processJobs()">整理</button>
   <pre id="jobsCsv"></pre>
 </div>
 
 <div id="seekers" class="tab">
   <h3>求職者データ入力</h3>
-  <textarea id="seekersInput" rows="10" cols="60"></textarea><br>
+  <input type="file" id="seekersFile" accept=".txt,.csv,.xlsx,.xls"><br>
   <button onclick="processSeekers()">整理</button>
   <pre id="seekersCsv"></pre>
 </div>
@@ -36,29 +37,68 @@
 <script>
 let jobsCsv = "";
 let seekersCsv = "";
+
 function showTab(id) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
+
+async function readUpload(input) {
+  const file = input.files[0];
+  if (!file) {
+    alert('ファイルを選択してください');
+    return null;
+  }
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'txt' || ext === 'csv') {
+    return await file.text();
+  } else if (ext === 'xlsx' || ext === 'xls') {
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data, {type: 'array'});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    return XLSX.utils.sheet_to_csv(sheet);
+  } else {
+    alert('対応していないファイル形式です');
+    return null;
+  }
+}
+
 async function processJobs() {
-  const text = document.getElementById('jobsInput').value;
-  const res = await fetch('/process_jobs', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text})});
+  const text = await readUpload(document.getElementById('jobsFile'));
+  if (!text) return;
+  const res = await fetch('/process_jobs', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({text})
+  });
   const data = await res.json();
   jobsCsv = data.csv;
   document.getElementById('jobsCsv').textContent = jobsCsv;
 }
+
 async function processSeekers() {
-  const text = document.getElementById('seekersInput').value;
-  const res = await fetch('/process_seekers', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text})});
+  const text = await readUpload(document.getElementById('seekersFile'));
+  if (!text) return;
+  const res = await fetch('/process_seekers', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({text})
+  });
   const data = await res.json();
   seekersCsv = data.csv;
   document.getElementById('seekersCsv').textContent = seekersCsv;
 }
+
 async function runMatch() {
-  const res = await fetch('/match', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({jobs_csv: jobsCsv, seekers_csv: seekersCsv})});
+  const res = await fetch('/match', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({jobs_csv: jobsCsv, seekers_csv: seekersCsv})
+  });
   const data = await res.json();
   document.getElementById('matchCsv').textContent = data.csv;
 }
+
 showTab('jobs');
 </script>
 </body>
