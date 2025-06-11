@@ -33,19 +33,20 @@
   <div>
     <h4>求人データ</h4>
     <input type="file" id="jobsFileMatch" accept=".txt,.csv,.xlsx,.xls"><br>
-    <button onclick="processJobs('jobsFileMatch','jobsStatusMatch')">整理</button>
+    <button onclick="processJobs('jobsFileMatch','jobsStatusMatch', false)">データ読込</button>
     <span id="jobsStatusMatch" style="display:none;">処理中...</span>
     <span id="jobsIndicator">データ無し</span>
   </div>
   <div>
     <h4>求職者データ</h4>
     <input type="file" id="seekersFileMatch" accept=".txt,.csv,.xlsx,.xls"><br>
-    <button onclick="processSeekers('seekersFileMatch','seekersStatusMatch')">整理</button>
+    <button onclick="processSeekers('seekersFileMatch','seekersStatusMatch', false)">データ読込</button>
     <span id="seekersStatusMatch" style="display:none;">処理中...</span>
     <span id="seekersIndicator">データ無し</span>
   </div>
   <button onclick="runMatch()">マッチ実行</button>
   <span id="matchStatus" style="display:none;">処理中...</span>
+  <pre id="matchText"></pre>
 </div>
 
 <script>
@@ -96,7 +97,7 @@ function updateIndicators() {
   if (seekersInd) seekersInd.textContent = seekersCsv ? 'データ有り' : 'データ無し';
 }
 
-async function processJobs(inputId='jobsFile', statusId='jobsStatus') {
+async function processJobs(inputId='jobsFile', statusId='jobsStatus', download=true) {
   const text = await readUpload(document.getElementById(inputId));
   if (!text) return;
   const jobsStatus = document.getElementById(statusId);
@@ -109,11 +110,13 @@ async function processJobs(inputId='jobsFile', statusId='jobsStatus') {
   const data = await res.json();
   jobsStatus.style.display = 'none';
   jobsCsv = data.csv;
-  downloadCsv(jobsCsv, 'jobs.csv');
+  if (download) {
+    downloadCsv(jobsCsv, 'jobs.csv');
+  }
   updateIndicators();
 }
 
-async function processSeekers(inputId='seekersFile', statusId='seekersStatus') {
+async function processSeekers(inputId='seekersFile', statusId='seekersStatus', download=true) {
   const text = await readUpload(document.getElementById(inputId));
   if (!text) return;
   const seekersStatus = document.getElementById(statusId);
@@ -126,7 +129,9 @@ async function processSeekers(inputId='seekersFile', statusId='seekersStatus') {
   const data = await res.json();
   seekersStatus.style.display = 'none';
   seekersCsv = data.csv;
-  downloadCsv(seekersCsv, 'seekers.csv');
+  if (download) {
+    downloadCsv(seekersCsv, 'seekers.csv');
+  }
   updateIndicators();
 }
 
@@ -140,6 +145,7 @@ async function runMatch() {
   });
   const data = await res.json();
   matchStatus.style.display = 'none';
+  document.getElementById('matchText').textContent = data.csv;
   downloadCsv(data.csv, 'match.csv');
 }
 
