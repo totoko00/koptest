@@ -30,6 +30,20 @@
 
 <div id="match" class="tab">
   <h3>マッチング</h3>
+  <div>
+    <h4>求人データ</h4>
+    <input type="file" id="jobsFileMatch" accept=".txt,.csv,.xlsx,.xls"><br>
+    <button onclick="processJobs('jobsFileMatch','jobsStatusMatch')">整理</button>
+    <span id="jobsStatusMatch" style="display:none;">処理中...</span>
+    <span id="jobsIndicator">データ無し</span>
+  </div>
+  <div>
+    <h4>求職者データ</h4>
+    <input type="file" id="seekersFileMatch" accept=".txt,.csv,.xlsx,.xls"><br>
+    <button onclick="processSeekers('seekersFileMatch','seekersStatusMatch')">整理</button>
+    <span id="seekersStatusMatch" style="display:none;">処理中...</span>
+    <span id="seekersIndicator">データ無し</span>
+  </div>
   <button onclick="runMatch()">マッチ実行</button>
   <span id="matchStatus" style="display:none;">処理中...</span>
 </div>
@@ -75,10 +89,17 @@ async function readUpload(input) {
   }
 }
 
-async function processJobs() {
-  const text = await readUpload(document.getElementById('jobsFile'));
+function updateIndicators() {
+  const jobsInd = document.getElementById('jobsIndicator');
+  if (jobsInd) jobsInd.textContent = jobsCsv ? 'データ有り' : 'データ無し';
+  const seekersInd = document.getElementById('seekersIndicator');
+  if (seekersInd) seekersInd.textContent = seekersCsv ? 'データ有り' : 'データ無し';
+}
+
+async function processJobs(inputId='jobsFile', statusId='jobsStatus') {
+  const text = await readUpload(document.getElementById(inputId));
   if (!text) return;
-  const jobsStatus = document.getElementById('jobsStatus');
+  const jobsStatus = document.getElementById(statusId);
   jobsStatus.style.display = 'inline';
   const res = await fetch('/process_jobs', {
     method: 'POST',
@@ -89,12 +110,13 @@ async function processJobs() {
   jobsStatus.style.display = 'none';
   jobsCsv = data.csv;
   downloadCsv(jobsCsv, 'jobs.csv');
+  updateIndicators();
 }
 
-async function processSeekers() {
-  const text = await readUpload(document.getElementById('seekersFile'));
+async function processSeekers(inputId='seekersFile', statusId='seekersStatus') {
+  const text = await readUpload(document.getElementById(inputId));
   if (!text) return;
-  const seekersStatus = document.getElementById('seekersStatus');
+  const seekersStatus = document.getElementById(statusId);
   seekersStatus.style.display = 'inline';
   const res = await fetch('/process_seekers', {
     method: 'POST',
@@ -105,6 +127,7 @@ async function processSeekers() {
   seekersStatus.style.display = 'none';
   seekersCsv = data.csv;
   downloadCsv(seekersCsv, 'seekers.csv');
+  updateIndicators();
 }
 
 async function runMatch() {
@@ -121,6 +144,7 @@ async function runMatch() {
 }
 
 showTab('jobs');
+updateIndicators();
 </script>
 </body>
 </html>
