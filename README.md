@@ -1,19 +1,19 @@
 # koptest
 
-This project demonstrates a simple job matching MVP using FastAPI and OpenAI.
+FastAPI と OpenAI を利用した簡易ジョブマッチングのデモプロジェクトです。
 
-## Setup
+## セットアップ
 
-Install dependencies:
+依存パッケージのインストール:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Set the `OPENAI_API_KEY` environment variable and run the server:
+環境変数 `OPENAI_API_KEY` を設定し、サーバーを起動します:
 
 ```bash
 uvicorn backend.main:app --reload
 ```
 
-Open `frontend/index.html` in your browser to use the demo UI.
+ブラウザで `frontend/index.html` を開くとデモ UI を利用できます。
