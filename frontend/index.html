@@ -18,20 +18,20 @@
   <h3>求人データ入力</h3>
   <input type="file" id="jobsFile" accept=".txt,.csv,.xlsx,.xls"><br>
   <button onclick="processJobs()">整理</button>
-  <pre id="jobsCsv"></pre>
+  <span id="jobsStatus" style="display:none;">処理中...</span>
 </div>
 
 <div id="seekers" class="tab">
   <h3>求職者データ入力</h3>
   <input type="file" id="seekersFile" accept=".txt,.csv,.xlsx,.xls"><br>
   <button onclick="processSeekers()">整理</button>
-  <pre id="seekersCsv"></pre>
+  <span id="seekersStatus" style="display:none;">処理中...</span>
 </div>
 
 <div id="match" class="tab">
   <h3>マッチング</h3>
   <button onclick="runMatch()">マッチ実行</button>
-  <pre id="matchCsv"></pre>
+  <span id="matchStatus" style="display:none;">処理中...</span>
 </div>
 
 <script>
@@ -78,39 +78,46 @@ async function readUpload(input) {
 async function processJobs() {
   const text = await readUpload(document.getElementById('jobsFile'));
   if (!text) return;
+  const jobsStatus = document.getElementById('jobsStatus');
+  jobsStatus.style.display = 'inline';
   const res = await fetch('/process_jobs', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({text})
   });
   const data = await res.json();
+  jobsStatus.style.display = 'none';
   jobsCsv = data.csv;
-  document.getElementById('jobsCsv').textContent = jobsCsv;
   downloadCsv(jobsCsv, 'jobs.csv');
 }
 
 async function processSeekers() {
   const text = await readUpload(document.getElementById('seekersFile'));
   if (!text) return;
+  const seekersStatus = document.getElementById('seekersStatus');
+  seekersStatus.style.display = 'inline';
   const res = await fetch('/process_seekers', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({text})
   });
   const data = await res.json();
+  seekersStatus.style.display = 'none';
   seekersCsv = data.csv;
-  document.getElementById('seekersCsv').textContent = seekersCsv;
   downloadCsv(seekersCsv, 'seekers.csv');
 }
 
 async function runMatch() {
+  const matchStatus = document.getElementById('matchStatus');
+  matchStatus.style.display = 'inline';
   const res = await fetch('/match', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({jobs_csv: jobsCsv, seekers_csv: seekersCsv})
   });
   const data = await res.json();
-  document.getElementById('matchCsv').textContent = data.csv;
+  matchStatus.style.display = 'none';
+  downloadCsv(data.csv, 'match.csv');
 }
 
 showTab('jobs');
