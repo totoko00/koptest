@@ -1,5 +1,6 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import openai
 from dotenv import load_dotenv
@@ -9,6 +10,16 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
+
+# Serve the demo UI at the root path
+@app.get("/")
+async def read_index():
+    return FileResponse("frontend/index.html")
+
+# Dummy empty response for favicon requests
+@app.get("/favicon.ico")
+async def favicon():
+    return Response(status_code=204)
 
 class TextIn(BaseModel):
     text: str
