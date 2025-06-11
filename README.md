@@ -10,9 +10,10 @@ FastAPI と OpenAI を利用した簡易ジョブマッチングのデモプロ�
 pip install -r requirements.txt
 ```
 
-環境変数 `OPENAI_API_KEY` を設定し、サーバーを起動します:
+環境変数 `OPENAI_API_KEY` を設定し、サーバーを起動します。 `.env` ファイルを用意してキーを記入しておくこともできます:
 
 ```bash
+echo "OPENAI_API_KEY=your-key" > .env
 uvicorn backend.main:app --reload
 ```
 
