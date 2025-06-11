@@ -11,6 +11,11 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
+# Load prompt template for matching from file
+match_prompt_path = os.path.join(os.path.dirname(__file__), "..", "match_prompt.txt")
+with open(match_prompt_path, encoding="utf-8") as f:
+    MATCH_PROMPT_TEMPLATE = f.read()
+
 # Serve the demo UI at the root path
 @app.get("/")
 async def read_index():
@@ -50,7 +55,10 @@ async def process_seekers(data: TextIn):
 
 @app.post("/match")
 async def match(data: MatchIn):
-    prompt = f"""あなたは一流の転職エージェントとして、以下の求人CSVと求職者CSVを基にマッチングを行ってください。\n求人CSV:\n{data.jobs_csv}\n\n求職者CSV:\n{data.seekers_csv}\n\n結果は次のフォーマットでCSV出力してください。相性スコアが高い順から10社までを出力してください。相性スコアが低くても10社に満たない場合は出力内容に加えてください。:\n求職者名,マッチ求人,相性スコア（1〜100）,コメント\n"""
+    prompt = MATCH_PROMPT_TEMPLATE.format(
+        jobs_csv=data.jobs_csv,
+        seekers_csv=data.seekers_csv,
+    )
     response = openai.chat.completions.create(
         model="gpt-4.1-mini",
         messages=[{"role": "user", "content": prompt}],
