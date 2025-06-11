@@ -50,7 +50,7 @@ async def process_seekers(data: TextIn):
 
 @app.post("/match")
 async def match(data: MatchIn):
-    prompt = f"""あなたは一流の転職エージェントとして、以下の求人CSVと求職者CSVを基にマッチングを行ってください。\n求人CSV:\n{data.jobs_csv}\n\n求職者CSV:\n{data.seekers_csv}\n\n結果は次のフォーマットでCSV出力してください:\n求職者名,マッチ求人,相性スコア（1〜100）,コメント\n"""
+    prompt = f"""あなたは一流の転職エージェントとして、以下の求人CSVと求職者CSVを基にマッチングを行ってください。\n求人CSV:\n{data.jobs_csv}\n\n求職者CSV:\n{data.seekers_csv}\n\n結果は次のフォーマットでCSV出力してください。相性スコアが高い順から10社までを出力してください。相性スコアが低くても10社に満たない場合は出力内容に加えてください。:\n求職者名,マッチ求人,相性スコア（1〜100）,コメント\n"""
     response = openai.chat.completions.create(
         model="gpt-4.1-mini",
         messages=[{"role": "user", "content": prompt}],
