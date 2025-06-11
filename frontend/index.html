@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Job Matching Demo</title>
+<style>
+.tab { display:none; }
+.active { display:block; }
+</style>
+</head>
+<body>
+<button onclick="showTab('jobs')">求人データ</button>
+<button onclick="showTab('seekers')">求職者データ</button>
+<button onclick="showTab('match')">マッチング結果</button>
+
+<div id="jobs" class="tab">
+  <h3>求人データ入力</h3>
+  <textarea id="jobsInput" rows="10" cols="60"></textarea><br>
+  <button onclick="processJobs()">整理</button>
+  <pre id="jobsCsv"></pre>
+</div>
+
+<div id="seekers" class="tab">
+  <h3>求職者データ入力</h3>
+  <textarea id="seekersInput" rows="10" cols="60"></textarea><br>
+  <button onclick="processSeekers()">整理</button>
+  <pre id="seekersCsv"></pre>
+</div>
+
+<div id="match" class="tab">
+  <h3>マッチング</h3>
+  <button onclick="runMatch()">マッチ実行</button>
+  <pre id="matchCsv"></pre>
+</div>
+
+<script>
+let jobsCsv = "";
+let seekersCsv = "";
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+async function processJobs() {
+  const text = document.getElementById('jobsInput').value;
+  const res = await fetch('/process_jobs', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text})});
+  const data = await res.json();
+  jobsCsv = data.csv;
+  document.getElementById('jobsCsv').textContent = jobsCsv;
+}
+async function processSeekers() {
+  const text = document.getElementById('seekersInput').value;
+  const res = await fetch('/process_seekers', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text})});
+  const data = await res.json();
+  seekersCsv = data.csv;
+  document.getElementById('seekersCsv').textContent = seekersCsv;
+}
+async function runMatch() {
+  const res = await fetch('/match', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({jobs_csv: jobsCsv, seekers_csv: seekersCsv})});
+  const data = await res.json();
+  document.getElementById('matchCsv').textContent = data.csv;
+}
+showTab('jobs');
+</script>
+</body>
+</html>
