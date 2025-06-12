@@ -21,37 +21,36 @@ function downloadCsv(csv: string, filename: string) {
   URL.revokeObjectURL(url)
 }
 
-interface JobData {
-  id: string
-  title: string
-  company: string
-  location: string
-  salary: string
-  requirements: string
+function parseCsv(csv: string): string[][] {
+  const wb = XLSX.read(csv, { type: "string" })
+  const sheet = wb.Sheets[wb.SheetNames[0]]
+  return XLSX.utils.sheet_to_json<string[]>(sheet, {
+    header: 1,
+    blankrows: false,
+  }) as string[][]
 }
 
-interface ApplicantData {
-  name: string
-  skills: string
-  experience: string
-  location: string
-  salary_expectation: string
+function objectsToRows(data: Record<string, any>[]): string[][] {
+  if (data.length === 0) return []
+  const headers = Object.keys(data[0])
+  const rows = data.map((obj) => headers.map((h) => String(obj[h] ?? "")))
+  return [headers, ...rows]
 }
 
-interface MatchResult {
-  applicant_name: string
-  matched_job: string
-  compatibility_score: number
-  comment: string
+function objectToRows(data: Record<string, any>): string[][] {
+  const headers = Object.keys(data)
+  const row = headers.map((h) => String(data[h] ?? ""))
+  return [headers, row]
 }
+
 
 export default function JobMatchingApp() {
   const [activeTab, setActiveTab] = useState("jobs")
   const [jobFile, setJobFile] = useState<File | null>(null)
   const [applicantFile, setApplicantFile] = useState<File | null>(null)
-  const [jobData, setJobData] = useState<JobData[]>([])
-  const [applicantData, setApplicantData] = useState<ApplicantData[]>([])
-  const [matchResults, setMatchResults] = useState<MatchResult[]>([])
+  const [jobData, setJobData] = useState<string[][]>([])
+  const [applicantData, setApplicantData] = useState<string[][]>([])
+  const [matchResults, setMatchResults] = useState<string[][]>([])
   const [jobsCsv, setJobsCsv] = useState("")
   const [seekersCsv, setSeekersCsv] = useState("")
   const [matchCsv, setMatchCsv] = useState("")
@@ -97,12 +96,9 @@ export default function JobMatchingApp() {
         const data = await response.json()
         if (data.csv) {
           setJobsCsv(data.csv)
-          const wb = XLSX.read(data.csv, { type: 'string' })
-          const sheet = wb.Sheets[wb.SheetNames[0]]
-          const rows = XLSX.utils.sheet_to_json<JobData>(sheet)
-          setJobData(rows as JobData[])
-        } else {
-          setJobData(data.jobs)
+          setJobData(parseCsv(data.csv))
+        } else if (data.jobs) {
+          setJobData(objectsToRows(data.jobs))
         }
       } else {
         console.error("Failed to process job data")
@@ -133,12 +129,9 @@ export default function JobMatchingApp() {
         const data = await response.json()
         if (data.csv) {
           setSeekersCsv(data.csv)
-          const wb = XLSX.read(data.csv, { type: 'string' })
-          const sheet = wb.Sheets[wb.SheetNames[0]]
-          const rows = XLSX.utils.sheet_to_json<ApplicantData>(sheet)
-          setApplicantData(rows as ApplicantData[])
-        } else {
-          setApplicantData([data.applicant])
+          setApplicantData(parseCsv(data.csv))
+        } else if (data.applicant) {
+          setApplicantData(objectToRows(data.applicant))
         }
       } else {
         console.error("Failed to process applicant data")
@@ -173,12 +166,9 @@ export default function JobMatchingApp() {
         const data = await response.json()
         if (data.csv) {
           setMatchCsv(data.csv)
-          const wb = XLSX.read(data.csv, { type: 'string' })
-          const sheet = wb.Sheets[wb.SheetNames[0]]
-          const rows = XLSX.utils.sheet_to_json<MatchResult>(sheet)
-          setMatchResults(rows as MatchResult[])
-        } else {
-          setMatchResults(data.matches)
+          setMatchResults(parseCsv(data.csv))
+        } else if (data.matches) {
+          setMatchResults(objectsToRows(data.matches))
           setMatchCsv("")
         }
         setShowMatchResults(true)
@@ -241,30 +231,24 @@ export default function JobMatchingApp() {
                   )}
                 </Button>
 
-                {jobData.length > 0 && (
+                {jobData.length > 1 && (
                   <div className="mt-6">
                     <h3 className="text-lg font-semibold mb-3">変換結果</h3>
-                    <div className="border rounded-lg overflow-hidden">
+                    <div className="border rounded-lg overflow-auto">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>ID</TableHead>
-                            <TableHead>職種</TableHead>
-                            <TableHead>会社名</TableHead>
-                            <TableHead>勤務地</TableHead>
-                            <TableHead>給与</TableHead>
-                            <TableHead>必要スキル</TableHead>
+                            {jobData[0].map((h, i) => (
+                              <TableHead key={i}>{h}</TableHead>
+                            ))}
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {jobData.map((job, index) => (
+                          {jobData.slice(1).map((row, index) => (
                             <TableRow key={index}>
-                              <TableCell>{job.id}</TableCell>
-                              <TableCell>{job.title}</TableCell>
-                              <TableCell>{job.company}</TableCell>
-                              <TableCell>{job.location}</TableCell>
-                              <TableCell>{job.salary}</TableCell>
-                              <TableCell>{job.requirements}</TableCell>
+                              {row.map((cell, i) => (
+                                <TableCell key={i}>{cell}</TableCell>
+                              ))}
                             </TableRow>
                           ))}
                         </TableBody>
@@ -304,28 +288,24 @@ export default function JobMatchingApp() {
                   )}
                 </Button>
 
-                {applicantData.length > 0 && (
+                {applicantData.length > 1 && (
                   <div className="mt-6">
                     <h3 className="text-lg font-semibold mb-3">変換結果</h3>
                     <div className="border rounded-lg overflow-hidden">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>名前</TableHead>
-                            <TableHead>スキル</TableHead>
-                            <TableHead>経験</TableHead>
-                            <TableHead>希望勤務地</TableHead>
-                            <TableHead>希望年収</TableHead>
+                            {applicantData[0].map((h, i) => (
+                              <TableHead key={i}>{h}</TableHead>
+                            ))}
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {applicantData.map((applicant, index) => (
+                          {applicantData.slice(1).map((row, index) => (
                             <TableRow key={index}>
-                              <TableCell>{applicant.name}</TableCell>
-                              <TableCell>{applicant.skills}</TableCell>
-                              <TableCell>{applicant.experience}</TableCell>
-                              <TableCell>{applicant.location}</TableCell>
-                              <TableCell>{applicant.salary_expectation}</TableCell>
+                              {row.map((cell, i) => (
+                                <TableCell key={i}>{cell}</TableCell>
+                              ))}
                             </TableRow>
                           ))}
                         </TableBody>
@@ -408,49 +388,29 @@ export default function JobMatchingApp() {
               <DialogDescription>AIが分析した求人とのマッチング結果です</DialogDescription>
             </DialogHeader>
 
-            {matchResults.length > 0 && (
+            {matchResults.length > 1 && (
               <div className="mt-4">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>求職者名</TableHead>
-                      <TableHead>マッチ求人</TableHead>
-                      <TableHead>相性スコア</TableHead>
-                      <TableHead>コメント</TableHead>
+                      {matchResults[0].map((h, i) => (
+                        <TableHead key={i}>{h}</TableHead>
+                      ))}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {matchResults.map((result, index) => (
+                    {matchResults.slice(1).map((row, index) => (
                       <TableRow key={index}>
-                        <TableCell className="font-medium">{result.applicant_name}</TableCell>
-                        <TableCell>{result.matched_job}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="w-12 bg-gray-200 rounded-full h-2">
-                              <div
-                                className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full"
-                                style={{ width: `${result.compatibility_score}%` }}
-                              ></div>
-                            </div>
-                            <span className="text-sm font-medium">{result.compatibility_score}%</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="max-w-xs">
-                          <p className="text-sm text-gray-600 line-clamp-3">{result.comment}</p>
-                        </TableCell>
+                        {row.map((cell, i) => (
+                          <TableCell key={i}>{cell}</TableCell>
+                        ))}
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
                 <Button
                   onClick={() =>
-                    downloadCsv(
-                      matchCsv ||
-                        XLSX.utils.sheet_to_csv(
-                          XLSX.utils.json_to_sheet(matchResults)
-                        ),
-                      "match.csv"
-                    )
+                    downloadCsv(matchCsv || XLSX.utils.sheet_to_csv(XLSX.utils.aoa_to_sheet(matchResults)), "match.csv")
                   }
                   className="mt-4"
                 >
