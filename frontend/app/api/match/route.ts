@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
-    const { jobs, applicant } = await request.json()
+    const { jobs_csv, seekers_csv } = await request.json()
 
     // FastAPI バックエンドへのリクエスト
     const response = await fetch(`${process.env.FASTAPI_URL}/match`, {
@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ jobs, applicant }),
+      body: JSON.stringify({ jobs_csv, seekers_csv }),
     })
 
     if (!response.ok) {
