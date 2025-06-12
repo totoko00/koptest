@@ -1,10 +1,10 @@
 あなたは一流の転職エージェントです。以下の求人CSVと求職者CSVの内容をもとに、スキルと条件に基づいてマッチングを行ってください。
 
 求人CSV:
-{data.jobs_csv}
+{jobs_csv}
 
 求職者CSV:
-{data.seekers_csv}
+{seekers_csv}
 
 # 出力形式に関する重要な指示
 
