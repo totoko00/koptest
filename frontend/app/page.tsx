@@ -9,6 +9,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Loader2, FileText, Users, Zap } from "lucide-react"
 
+function downloadCsv(csv: string, filename: string) {
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
 interface JobData {
   id: string
   title: string
@@ -42,6 +54,7 @@ export default function JobMatchingApp() {
   const [matchResults, setMatchResults] = useState<MatchResult[]>([])
   const [jobsCsv, setJobsCsv] = useState("")
   const [seekersCsv, setSeekersCsv] = useState("")
+  const [matchCsv, setMatchCsv] = useState("")
   const [matchJobsFile, setMatchJobsFile] = useState<File | null>(null)
   const [matchSeekersFile, setMatchSeekersFile] = useState<File | null>(null)
   const [isJobProcessing, setIsJobProcessing] = useState(false)
@@ -159,12 +172,14 @@ export default function JobMatchingApp() {
       if (response.ok) {
         const data = await response.json()
         if (data.csv) {
+          setMatchCsv(data.csv)
           const wb = XLSX.read(data.csv, { type: 'string' })
           const sheet = wb.Sheets[wb.SheetNames[0]]
           const rows = XLSX.utils.sheet_to_json<MatchResult>(sheet)
           setMatchResults(rows as MatchResult[])
         } else {
           setMatchResults(data.matches)
+          setMatchCsv("")
         }
         setShowMatchResults(true)
       } else {
@@ -255,6 +270,12 @@ export default function JobMatchingApp() {
                         </TableBody>
                       </Table>
                     </div>
+                    <Button
+                      onClick={() => downloadCsv(jobsCsv, "jobs.csv")}
+                      className="mt-2"
+                    >
+                      CSVダウンロード
+                    </Button>
                   </div>
                 )}
               </TabsContent>
@@ -310,6 +331,12 @@ export default function JobMatchingApp() {
                         </TableBody>
                       </Table>
                     </div>
+                    <Button
+                      onClick={() => downloadCsv(seekersCsv, "seekers.csv")}
+                      className="mt-2"
+                    >
+                      CSVダウンロード
+                    </Button>
                   </div>
                 )}
               </TabsContent>
@@ -415,6 +442,20 @@ export default function JobMatchingApp() {
                     ))}
                   </TableBody>
                 </Table>
+                <Button
+                  onClick={() =>
+                    downloadCsv(
+                      matchCsv ||
+                        XLSX.utils.sheet_to_csv(
+                          XLSX.utils.json_to_sheet(matchResults)
+                        ),
+                      "match.csv"
+                    )
+                  }
+                  className="mt-4"
+                >
+                  CSVダウンロード
+                </Button>
               </div>
             )}
           </DialogContent>
