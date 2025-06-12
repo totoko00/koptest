@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
     const { text } = await request.json()
 
     // FastAPI バックエンドへのリクエスト
-    const response = await fetch(`${process.env.FASTAPI_URL}/process-jobs`, {
+    const response = await fetch(`${process.env.FASTAPI_URL}/process_jobs`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
