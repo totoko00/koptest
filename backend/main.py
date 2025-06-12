@@ -16,10 +16,10 @@ match_prompt_path = os.path.join(os.path.dirname(__file__), "..", "match_prompt.
 with open(match_prompt_path, encoding="utf-8") as f:
     MATCH_PROMPT_TEMPLATE = f.read()
 
-# Serve the demo UI at the root path
+# Simple health check at the root path
 @app.get("/")
-async def read_index():
-    return FileResponse("frontend/index.html")
+async def read_root():
+    return {"status": "ok"}
 
 # Dummy empty response for favicon requests
 @app.get("/favicon.ico")
